@@ -35,12 +35,12 @@ You can view or download each script directly from this repository:
 
 
 > 💡 **Tip:** You can download all scripts at once using `wget`:
-> ```bash
+```bash
  wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-tools.sh
  wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-cluster.sh
  wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/cleanup.sh
  wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/uninstall-tools.sh
-> ```
+```
 
 ---
 
