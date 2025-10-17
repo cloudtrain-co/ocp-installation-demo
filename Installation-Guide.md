@@ -17,7 +17,7 @@ This guide explains how to install an **OpenShift Container Platform (OCP)** sel
 2. An **AWS user** with CLI access and permission to create resources (preferably admin rights).  
 3. Once the Route53 hosted zone is created, copy the list of nameservers and add an **NS record** to your domain provider’s DNS configuration.  
 4. Verify DNS resolution using [whatsmydns.net](https://whatsmydns.net).  
-5. Download your **Pull Secret** from the [Red Hat portal](https://console.redhat.com/openshift/downloads).
+5. Download your **Pull Secret** from the [Red Hat portal](https://console.redhat.com/openshift/downloads) and save it in a file named as pull-secret.json.
 
 ---
 
