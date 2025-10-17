@@ -25,12 +25,13 @@ This guide explains how to install an **OpenShift Container Platform (OCP)** sel
 
 You can view or download each script directly from this repository:
 
-| Script | Description |
-|---------|--------------|
-| `install-tools.sh` | Installs `oc`, `kubectl`, and `aws cli` |
-| `install-cluster.sh` | Creates Route53 hosted zone and starts cluster installation |
-| `cleanup.sh` | Deletes the OCP cluster and Route53 hosted zone |
-| `uninstall-tools.sh` | Uninstalls `oc`, `kubectl`, `aws`, and `openshift-install` binaries |
+| Script                                     Description                           |
+| -------------------------------------------------------------------------------- |
+| install-tools.sh — Installs oc, kubectl, and aws cli                             |
+| install-cluster.sh — Creates Route53 hosted zone and starts cluster installation |
+| cleanup.sh — Deletes the OCP cluster and Route53 hosted zone                     |
+| uninstall-tools.sh — Uninstalls oc, kubectl, aws, and openshift-install binaries |
+
 
 Download all scripts at once using the commands below:
 
@@ -118,13 +119,4 @@ After deletion, remove the NS records added to your domain provider before clust
 * Do not run cluster installation from an **EC2 instance**.
 * Keep a copy of your **pull-secret.json** and **kubeadmin credentials** secure.
 
----
 
-© 2025 — [cloudtrain.co@gmail.com](mailto:cloudtrain.co@gmail.com)
-
-```
-
----
-
-
-```
