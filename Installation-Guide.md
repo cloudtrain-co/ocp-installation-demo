@@ -1,7 +1,3 @@
-Perfect 👍 — here’s your `README.md` cleaned up and properly formatted for GitHub Pages or repository display.
-All Markdown syntax, indentation, and code block formatting are corrected.
-You can copy–paste this **exact version** into your repo.
-
 ---
 
 ````markdown
@@ -36,7 +32,7 @@ You can view or download each script directly from this repository:
 | `cleanup.sh` | Deletes the OCP cluster and Route53 hosted zone |
 | `uninstall-tools.sh` | Uninstalls `oc`, `kubectl`, `aws`, and `openshift-install` binaries |
 
-> 💡 **Tip:** You can download all scripts at once using the commands below:
+Download all scripts at once using the commands below:
 
 ```bash
 wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-tools.sh
