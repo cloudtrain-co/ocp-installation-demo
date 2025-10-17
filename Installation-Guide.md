@@ -1,4 +1,4 @@
----
+
 
 ````markdown
 # OCP (Self-managed) Installation on AWS
@@ -10,7 +10,7 @@ This guide explains how to install an **OpenShift Container Platform (OCP)** sel
 > Perform the following steps from your **Linux** or **Windows (WSL)** laptop.  
 > Do **not** perform cluster installation from an EC2 instance.
 
----
+
 
 ## Prerequisites
 1. You must have a **domain name** for creating the cluster.  
