@@ -1,4 +1,8 @@
+Perfect 👍 — here’s your `README.md` cleaned up and properly formatted for GitHub Pages or repository display.
+All Markdown syntax, indentation, and code block formatting are corrected.
+You can copy–paste this **exact version** into your repo.
 
+---
 
 ````markdown
 # OCP (Self-managed) Installation on AWS
@@ -10,7 +14,7 @@ This guide explains how to install an **OpenShift Container Platform (OCP)** sel
 > Perform the following steps from your **Linux** or **Windows (WSL)** laptop.  
 > Do **not** perform cluster installation from an EC2 instance.
 
-
+---
 
 ## Prerequisites
 1. You must have a **domain name** for creating the cluster.  
@@ -32,28 +36,30 @@ You can view or download each script directly from this repository:
 | `cleanup.sh` | Deletes the OCP cluster and Route53 hosted zone |
 | `uninstall-tools.sh` | Uninstalls `oc`, `kubectl`, `aws`, and `openshift-install` binaries |
 
+> 💡 **Tip:** You can download all scripts at once using the commands below:
 
-
-> 💡 **Tip:** You can download all scripts at once using `wget`:
 ```bash
- wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-tools.sh
- wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-cluster.sh
- wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/cleanup.sh
- wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/uninstall-tools.sh
-```
+wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-tools.sh
+wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-cluster.sh
+wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/cleanup.sh
+wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/uninstall-tools.sh
+````
 
 ---
 
 ## Preparing Your Environment
 
 ### Install Required Tools
+
+
+
 ---
 
 ## Installation Steps
 
 ### Step 1: Copy Scripts
 
-Copy the scripts to your OS under the user's `home` directory:
+Copy the scripts to your OS under the user's home directory:
 
 ```bash
 cp install-tools.sh install-cluster.sh cleanup.sh uninstall-tools.sh ~
@@ -118,7 +124,7 @@ After deletion, remove the NS records added to your domain provider before clust
 
 ---
 
-© 2025 — cloudtrain.co@gmail.com
+© 2025 — [cloudtrain.co@gmail.com](mailto:cloudtrain.co@gmail.com)
 
 ```
 
