@@ -34,28 +34,19 @@ You can view or download each script directly from this repository:
 
 
 Download all scripts at once using the commands below:
-
+````
 ```bash
 wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-tools.sh
 wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/install-cluster.sh
 wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/cleanup.sh
 wget https://raw.githubusercontent.com/cloudtrain-co/ocp-installation-demo/main/uninstall-tools.sh
-````
-
+```
 ---
-
 ## Preparing Your Environment
-
 ### Install Required Tools
-
-
-
 ---
-
 ## Installation Steps
-
 ### Step 1: Copy Scripts
-
 Copy the scripts to your OS under the user's home directory:
 
 ```bash
@@ -63,16 +54,13 @@ cp install-tools.sh install-cluster.sh cleanup.sh uninstall-tools.sh ~
 ```
 
 ### Step 2: Install Required Tools
-
 Run the tool installation script:
-
 ```bash
 cd ~
 ./install-tools.sh
 ```
 
 ### Step 3: Save Pull Secret
-
 Login to the Red Hat portal and copy your pull secret.
 Save it to `~/pull-secret.json`:
 
@@ -118,5 +106,3 @@ After deletion, remove the NS records added to your domain provider before clust
 * Always perform installation and deletion from the same **bastion host**.
 * Do not run cluster installation from an **EC2 instance**.
 * Keep a copy of your **pull-secret.json** and **kubeadmin credentials** secure.
-
-
