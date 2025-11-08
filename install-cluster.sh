@@ -1,4 +1,3 @@
-# cat install-cluster.sh
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -41,6 +40,36 @@ mask_value() {
   else
     echo "***masked***"
   fi
+}
+
+# ==================================================
+# Cluster type configuration functions
+# ==================================================
+configure_cluster_type() {
+    echo ""
+    echo "Please select the cluster type:"
+    echo "1. Single Node cluster"
+    echo "2. Multi node cluster"
+    read -p "Enter your choice (1 or 2): " cluster_choice
+    
+    case $cluster_choice in
+        1)
+            info "Configuring Single Node cluster..."
+            # Replace worker replicas with 0 and master replicas with 1
+            yq eval '.compute[0].replicas = 0 | .controlPlane.replicas = 1' -i "${INSTALL_CONFIG_FILE}"
+            info "Updated install-config.yaml: worker replicas = 0, master replicas = 1"
+            ;;
+        2)
+            info "Configuring Multi node cluster (default configuration)"
+            # Ensure default values (worker replicas = 1, master replicas = 3)
+            yq eval '.compute[0].replicas = 1 | .controlPlane.replicas = 3' -i "${INSTALL_CONFIG_FILE}"
+            info "Updated install-config.yaml: worker replicas = 1, master replicas = 3"
+            ;;
+        *)
+            error "Invalid choice. Please try again."
+            configure_cluster_type
+            ;;
+    esac
 }
 
 # ==================================================
@@ -138,7 +167,6 @@ controlPlane:
       - ${region}a
   replicas: 3
 metadata:
-  creationTimestamp: null
   name: ${cluster_name}
 networking:
   clusterNetwork:
@@ -152,7 +180,6 @@ networking:
 platform:
   aws:
     region: ${region}
-    vpc: {}
 publish: External
 pullSecret: |
   ${pull_secret}
@@ -179,6 +206,11 @@ fi
 
 cp "${CUSTOM_CONFIG_FILE}" "${INSTALL_CONFIG_FILE}"
 info "custom-install-config.yaml copied to ${INSTALL_CONFIG_FILE}"
+
+# ==================================================
+# Ask user for cluster type and configure accordingly
+# ==================================================
+configure_cluster_type
 
 # ==================================================
 # Create or verify Route53 hosted zone
@@ -270,6 +302,13 @@ preview_ssh_key=$(tail -c 6 <<< "$FINAL_SSH_KEY" 2>/dev/null || echo "N/A")
 info "Cluster creation confirmation:"
 echo "  Pull Secret last 6 chars: ${preview_pull_secret}"
 echo "  SSH Key last 6 chars     : ${preview_ssh_key}"
+
+# Display final cluster configuration
+info "Final cluster configuration:"
+WORKER_REPLICAS=$(yq e '.compute[0].replicas' "${INSTALL_CONFIG_FILE}")
+MASTER_REPLICAS=$(yq e '.controlPlane.replicas' "${INSTALL_CONFIG_FILE}")
+echo "  Worker nodes: ${WORKER_REPLICAS}"
+echo "  Master nodes: ${MASTER_REPLICAS}"
 
 # ==================================================
 # Confirm and run OpenShift installer
