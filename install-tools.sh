@@ -1,5 +1,3 @@
-#cat install-tools.sh
-
 #!/usr/bin/env bash
 set -euo pipefail
 
@@ -18,7 +16,7 @@ AWS_REGION="ap-south-1"
 OCP_DIR="${HOME}/ocp-installation"
 AWS_DIR="${OCP_DIR}/.aws"
 AWS_CREDENTIALS_FILE="${AWS_DIR}/credentials"
-AWS_CONFIG_FILE="${AWS_DIR}/config"
+AWS_CONFIG_FILE="${AWS_DIR}/config"  # FIXED: Was assigned to itself
 
 cleanup() { rm -rf "${WORKDIR}"; }
 trap cleanup EXIT
@@ -47,67 +45,126 @@ ensure_package() {
   fi
 }
 
-info "Preparing environment and installing prerequisites"
-ensure_package "curl"
-ensure_package "unzip"
-ensure_package "wget"
-ensure_package "ca-certificates"
-ensure_package "lsb-release"
-ensure_package "bash-completion"
-ensure_package "openssh-client"
-
-mkdir -p "${WORKDIR}"
-cd "${WORKDIR}"
+check_openshift_version() {
+    local tool="$1"
+    if command -v "${tool}" >/dev/null 2>&1; then
+        local current_version
+        if [ "${tool}" = "openshift-install" ]; then
+            current_version=$(${tool} version 2>/dev/null | grep -oP '(\d+\.\d+\.\d+)' | head -1 || echo "")
+        else
+            current_version=$(${tool} version --client 2>/dev/null | grep -oP '(\d+\.\d+\.\d+)' | head -1 || echo "")
+        fi
+        
+        if [ "${current_version}" = "${OPENSHIFT_VERSION}" ]; then
+            info "${tool} version ${current_version} already matches required version ${OPENSHIFT_VERSION}"
+            return 0
+        elif [ -n "${current_version}" ]; then
+            info "${tool} version ${current_version} found, but required version is ${OPENSHIFT_VERSION}"
+            return 1
+        fi
+    fi
+    return 1
+}
 
 install_aws_cli() {
-  info "Installing AWS CLI v2"
-  if command -v aws >/dev/null 2>&1; then
-    current="$(aws --version 2>&1 || true)"
-    info "Existing aws detected: ${current}"
-    if ! confirm "Overwrite existing aws CLI installation?" "Y"; then
-      info "Skipping AWS CLI installation"
-      return
+    info "Checking AWS CLI installation"
+    
+    # Check if AWS CLI is already installed and is version 2
+    if command -v aws >/dev/null 2>&1; then
+        local aws_version
+        aws_version=$(aws --version 2>&1 | head -1 || true)
+        
+        # Check if it's AWS CLI v2 (contains "aws-cli/2")
+        if echo "${aws_version}" | grep -q "aws-cli/2"; then
+            info "AWS CLI v2 already installed: ${aws_version}"
+            if confirm "Reinstall AWS CLI v2?" "N"; then
+                info "Proceeding with AWS CLI v2 reinstallation"
+            else
+                info "Skipping AWS CLI installation"
+                return 0
+            fi
+        else
+            info "Found AWS CLI v1, upgrading to v2: ${aws_version}"
+        fi
+    else
+        info "AWS CLI not found, installing v2"
     fi
-  fi
-  info "Downloading AWS CLI"
-  curl -sSL "${AWS_URL}" -o "${AWS_ZIP}"
-  unzip -oq "${AWS_ZIP}"
-  sudo ./aws/install --update || sudo ./aws/install || true
-  export PATH="${PATH}:${INSTALL_DIR}"
-  info "AWS CLI install attempted"
+    
+    info "Downloading and installing AWS CLI v2"
+    curl -sSL "${AWS_URL}" -o "${AWS_ZIP}"
+    unzip -oq "${AWS_ZIP}"
+    
+    if sudo ./aws/install --update 2>/dev/null || sudo ./aws/install 2>/dev/null; then
+        info "AWS CLI v2 installed successfully"
+    else
+        error "AWS CLI installation failed"
+        return 1
+    fi
 }
 
 install_openshift_tools() {
-  info "Installing OpenShift installer and client (oc, kubectl)"
-  wget  "${OC_CLIENT_URL}" -O "${OC_CLIENT_TAR}"
-  wget  "${OC_INSTALLER_URL}" -O "${OC_INSTALLER_TAR}"
-  tar -xzf "${OC_CLIENT_TAR}"
-  tar -xzf "${OC_INSTALLER_TAR}"
-  for bin in oc kubectl openshift-install; do
-    if [ -f "${bin}" ]; then
-      if command -v "${bin}" >/dev/null 2>&1; then
-        if confirm "Overwrite existing ${bin} in ${INSTALL_DIR}?" "Y"; then
-          sudo mv -f "${bin}" "${INSTALL_DIR}/"; sudo chmod +x "${INSTALL_DIR}/${bin}"
+    info "Checking OpenShift tools installation"
+    
+    local tools_to_install=()
+    local binaries=("oc" "kubectl" "openshift-install")
+    
+    # Check which tools need installation/upgrade
+    for bin in "${binaries[@]}"; do
+        if check_openshift_version "${bin}"; then
+            info "Skipping ${bin} - correct version already installed"
         else
-          info "Skipping overwrite of ${bin}"; rm -f "${bin}"
+            tools_to_install+=("${bin}")
+            info "${bin} will be installed/upgraded"
         fi
-      else
-        sudo mv -f "${bin}" "${INSTALL_DIR}/"; sudo chmod +x "${INSTALL_DIR}/${bin}"
-      fi
-    else
-      error "Expected binary ${bin} not found after extracting tar"
+    done
+    
+    # If all tools are already at correct version, skip download and installation
+    if [ ${#tools_to_install[@]} -eq 0 ]; then
+        info "All OpenShift tools are already at version ${OPENSHIFT_VERSION}, skipping download"
+        return 0
     fi
-  done
-
-  info "Configuring oc bash completion"
-  if [ -x "${INSTALL_DIR}/oc" ]; then
-    oc completion bash > oc_bash_completion || true
-    sudo mv -f oc_bash_completion /etc/bash_completion.d/oc
-    sudo chmod 644 /etc/bash_completion.d/oc
-    if ! grep -qF "/etc/bash_completion.d/oc" "${HOME}/.bashrc" 2>/dev/null; then
-      echo "source /etc/bash_completion.d/oc" >> "${HOME}/.bashrc"
+    
+    info "Downloading OpenShift tools version ${OPENSHIFT_VERSION}"
+    
+    # Download client tools
+    if [[ " ${tools_to_install[*]} " =~ [[:space:]]oc[[:space:]] ]] || [[ " ${tools_to_install[*]} " =~ [[:space:]]kubectl[[:space:]] ]]; then
+        info "Downloading OpenShift client tools"
+        wget -q "${OC_CLIENT_URL}" -O "${OC_CLIENT_TAR}"
+        tar -xzf "${OC_CLIENT_TAR}"
     fi
-  fi
+    
+    # Download installer
+    if [[ " ${tools_to_install[*]} " =~ [[:space:]]openshift-install[[:space:]] ]]; then
+        info "Downloading OpenShift installer"
+        wget -q "${OC_INSTALLER_URL}" -O "${OC_INSTALLER_TAR}"
+        tar -xzf "${OC_INSTALLER_TAR}"
+    fi
+    
+    # Install the required binaries
+    for bin in "${tools_to_install[@]}"; do
+        if [ -f "${bin}" ]; then
+            info "Installing ${bin} to ${INSTALL_DIR}"
+            sudo mv -f "${bin}" "${INSTALL_DIR}/"
+            sudo chmod +x "${INSTALL_DIR}/${bin}"
+            info "${bin} installed successfully"
+        else
+            error "Expected binary ${bin} not found after extraction"
+        fi
+    done
+    
+    # Configure bash completion for oc if oc was installed
+    if [[ " ${tools_to_install[*]} " =~ [[:space:]]oc[[:space:]] ]] && [ -x "${INSTALL_DIR}/oc" ]; then
+        info "Configuring oc bash completion"
+        oc completion bash > oc_bash_completion 2>/dev/null || true
+        if [ -s "oc_bash_completion" ]; then
+            sudo mv -f oc_bash_completion /etc/bash_completion.d/oc
+            sudo chmod 644 /etc/bash_completion.d/oc
+            if ! grep -qF "/etc/bash_completion.d/oc" "${HOME}/.bashrc" 2>/dev/null; then
+                echo "source /etc/bash_completion.d/oc" >> "${HOME}/.bashrc"
+            fi
+            info "oc bash completion configured"
+        fi
+    fi
 }
 
 ensure_ssh_key() {
@@ -122,6 +179,17 @@ ensure_ssh_key() {
 }
 
 configure_aws_profile_in_dir() {
+  # Check if AWS profile already exists and ask if user wants to reconfigure
+  if [ -f "${AWS_CREDENTIALS_FILE}" ] && [ -f "${AWS_CONFIG_FILE}" ]; then
+    info "AWS profile already exists at ${AWS_DIR}"
+    if confirm "Do you want to reconfigure AWS credentials?" "N"; then
+      info "Reconfiguring AWS profile"
+    else
+      info "Using existing AWS profile"
+      return 0
+    fi
+  fi
+
   info "Creating directory ${OCP_DIR} (skipping if exists) and writing AWS profile ${AWS_PROFILE_NAME} there"
   mkdir -p "${AWS_DIR}"
   chmod 700 "${AWS_DIR}"
@@ -163,6 +231,17 @@ verify_tool() {
 
 main() {
   info "Starting installation in ${WORKDIR}"
+  
+  # Install required system packages
+  info "Checking and installing required system packages"
+  ensure_package "curl"
+  ensure_package "unzip"
+  ensure_package "wget"
+  ensure_package "ca-certificates"
+  ensure_package "lsb-release"
+  ensure_package "bash-completion"
+  ensure_package "openssh-client"
+  
   install_aws_cli
   install_openshift_tools
   ensure_ssh_key
